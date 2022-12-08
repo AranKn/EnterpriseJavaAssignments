@@ -1,6 +1,7 @@
 package com.javastack.JDBCCRUD;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -9,18 +10,16 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Scanner;
 
-import com.javastack.JDBCStatement.JDBCStatement;
 
 public class JdbcCrud 
 {	
 	public static void main(String[] args) throws SQLException, ParseException ,Exception
 	{
 		Connection connection=JDBCStatement.getConnection();
-		Scanner scanner = new Scanner(System.in);
+		Scanner scanner = new Scanner(System.in);		
 		System.out.print("Enter the name of the table to be modified : ");
 		String tableName=scanner.next();
-		
-		CRUDOperation crudObject=new CRUDOperation(tableName,connection);
+		CRUDOperation crudObject=new CRUDOperation(connection);
 		
 		//Question1
 //		crudObject.insertDataUsingStatement(tableName,scanner);
@@ -29,29 +28,29 @@ public class JdbcCrud
 //		crudObject.deleteRecordUsingStatement(tableName,scanner);
 		
 		//Question2
-		//crudObject.insertDataUsingWithSQLDate(tableName,scanner);
+		crudObject.insertDataUsingWithSQLDate(tableName,scanner);
 		crudObject.retrieveDataWithDatesInMultipleFormats(tableName);
 		
-		//crudObject.deleteAllRecordsUsingStatement(tableName);
+		crudObject.deleteAllRecordsUsingStatement(tableName);
 		
 		//Question3
-//		crudObject.insertDataUsingPreparedStatement(tableName, scanner);
-//		crudObject.readDataUsingPreparedStatement(tableName);
-//		crudObject.updateRecordUsingPreparedStatement(tableName,scanner);
-//		crudObject.deleteRecordUsingPreparedStatement(tableName,scanner);
-//		crudObject.deleteAllRecordsUsingPreparedStatement(tableName);
+		crudObject.insertDataUsingPreparedStatement(tableName, scanner);
+		crudObject.readDataUsingPreparedStatement(tableName);
+		crudObject.updateRecordUsingPreparedStatement(tableName,scanner);
+		crudObject.deleteRecordUsingPreparedStatement(tableName,scanner);
+		crudObject.deleteAllRecordsUsingPreparedStatement(tableName);
 		
-
+		//Closing Connection
+		JDBCStatement.closeConnection(connection);
 	}
 }
 
 class CRUDOperation
 {
-	private String tableName;
 	private Connection connection;
-	public CRUDOperation(String tableName,Connection connection)
+	private ResultSet resultSet=null;
+	public CRUDOperation(Connection connection)
 	{
-		this.tableName=tableName;
 		this.connection=connection;
 	}
 
@@ -91,13 +90,11 @@ class CRUDOperation
 		System.out.println(count==n?"All the given records are inserted into"+tableName+"table successfully" : "Please check your query");
 	}
 
-
 	public void deleteAllRecordsUsingStatement(String tableName) throws SQLException 
 	{
 		connection.createStatement().executeUpdate("DELETE from "+tableName);
 		System.out.println("All the records in the table "+tableName+" deleted successfully");
 	}
-	
 	
 	public void deleteAllRecordsUsingPreparedStatement(String tableName) throws SQLException 
 	{
@@ -105,7 +102,6 @@ class CRUDOperation
 		System.out.println("All the records in the table "+tableName+" deleted successfully");
 	}
 
-	
 	public void deleteRecordUsingStatement(String tableName,Scanner scanner) throws SQLException 
 	{
 		Statement statement=connection.createStatement();
@@ -118,15 +114,15 @@ class CRUDOperation
 		readDataUsingStatement(tableName);
 	}
 	
-	
 	public void deleteRecordUsingPreparedStatement(String tableName, Scanner scanner) throws SQLException 
 	{
 		System.out.println("Before Deleting record");
 		readDataUsingPreparedStatement(tableName);
 		int id=0;
-		System.out.print("Enter the Id of the student to be removed : ");
+		System.out.print("Enter the  Id  and Name of the student to be removed : ");
+		System.out.print("Student Id : ");
 		id=scanner.nextInt();
-		System.out.print("Enter the Name of the student to be removed : ");
+		System.out.print("Student Name : ");
 		String name=scanner.next();
 		PreparedStatement statement=connection.prepareStatement("DELETE from "+tableName+" where Student_Name=? and Student_Id=?");
 		statement.setString(1, name);
@@ -136,7 +132,6 @@ class CRUDOperation
 		readDataUsingPreparedStatement(tableName);
 	}
 	
-	
 	public void retrieveDataWithDatesInMultipleFormats(String tableName) throws SQLException 
 	{
 		Statement statement=connection.createStatement();
@@ -145,6 +140,7 @@ class CRUDOperation
 		while(resultSet.next())
 			System.out.print(resultSet.getInt(1)+"\t\t"+resultSet.getString(2)+"\t\t"+resultSet.getString(3)+"\t\t"+resultSet.getString(4)+"\t\t"+new SimpleDateFormat("dd-MM-yyyy").format(resultSet.getDate(5))+"\t"+new SimpleDateFormat("MM-dd-yyyy").format(resultSet.getDate(6))+"\t"+resultSet.getDate(7)+"\n");
 	}
+	
 	public void insertDataUsingStatement(String tableName,Scanner scanner) throws SQLException, ParseException
 	{
 		Statement statement=this.connection.createStatement();
@@ -270,18 +266,40 @@ class CRUDOperation
 			System.out.print(resultSet.getInt(1)+"\t\t"+resultSet.getString(2)+"\t\t"+resultSet.getString(3)+"\t\t"+resultSet.getString(4)+"\t\t"+resultSet.getDate(5)+"\t"+resultSet.getDate(6)+"\t"+resultSet.getDate(7));
 			System.out.println();
 		}
+		if(resultSet!=null)
+			resultSet.close();
+		if(statement!=null)
+			statement.close();
 	}
 	
 	
 	public void readDataUsingPreparedStatement(String tableName) throws SQLException
 	{
 		PreparedStatement statement=connection.prepareStatement("SELECT * from "+tableName);
-		ResultSet resultSet=statement.executeQuery();
+		resultSet=statement.executeQuery();
 		System.out.println("Student_ID\tStudent_Name\tStudent_Address\tStudent_Gender\tStudent_DOB\tStudent_DOJ\tStudent_DOM");
 		while(resultSet.next())
 		{
 			System.out.print(resultSet.getInt(1)+"\t\t"+resultSet.getString(2)+"\t\t"+resultSet.getString(3)+"\t"+resultSet.getString(4)+"\t"+resultSet.getDate(5)+"\t"+resultSet.getDate(6)+"\t"+resultSet.getDate(7));
 			System.out.println();
 		}
+		if(resultSet!=null)
+			resultSet.close();
+		if(statement!=null)
+			statement.close();
+	}
+}
+
+class JDBCStatement 
+{
+	public static Connection getConnection() throws SQLException {
+		Connection connection=DriverManager.getConnection("jdbc:mysql://localhost:3306/studentsbase", "root", "rootworD@123");
+		return connection;
+	}
+	
+	public static void closeConnection( Connection connection)	throws SQLException 
+	{
+		if (connection != null) 
+			connection.close();
 	}
 }
