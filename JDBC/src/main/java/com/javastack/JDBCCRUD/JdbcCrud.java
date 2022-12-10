@@ -22,10 +22,10 @@ public class JdbcCrud
 		CRUDOperation crudObject=new CRUDOperation(connection);
 		
 		//Question1
-//		crudObject.insertDataUsingStatement(tableName,scanner);
-//		crudObject.readDataUsingStatement(tableName);
-//		crudObject.updateRecord(tableName,scanner);
-//		crudObject.deleteRecordUsingStatement(tableName,scanner);
+		crudObject.insertDataUsingStatement(tableName,scanner);
+		crudObject.readDataUsingStatement(tableName);
+		crudObject.updateRecord(tableName,scanner);
+		crudObject.deleteRecordUsingStatement(tableName,scanner);
 		
 		//Question2
 		crudObject.insertDataUsingWithSQLDate(tableName,scanner);
